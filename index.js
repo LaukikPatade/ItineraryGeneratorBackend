@@ -30,11 +30,9 @@ app.get('/register',(req,res)=>{
 })
 app.post('/register',(req,res)=>{
     const id=uuidv4();
-    const {title}=req.body
-    users[id]={
-        id,title
-    }
-    const user=new User({email:title})
+    const {username,password}=req.body
+    
+    const user=new User({email:username,password})
     user.save()
     res.status(201).send(users[id])
 })
