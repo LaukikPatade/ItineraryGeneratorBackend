@@ -3,6 +3,10 @@ const { v4: uuidv4 } = require('uuid');
 const cors=require('cors')
 const mongoose= require('mongoose')
 const bodyParser=require('body-parser')
+const User=require("./models/user")
+const passport=require('passport')
+const session=require('express-session')
+const passportLocal=require('passport-local')
 mongoose.connect("mongodb+srv://laukik2210:XOp0u5I4G4sODa1K@cluster0.jfqmg.mongodb.net/UserDB",{
     useNewUrlParser:true,
     useUnifiedTopology:true,
@@ -23,18 +27,57 @@ const app=express();
 
 app.use(bodyParser.json())
 app.use(cors())
+const sessionConfig={
+    name:'nigga',
+    secret:'nicesecret',
+    resave:false,
+    saveUninitialized:true,
+    cookie:{
+        httpOnly:true,
+        expires:Date.now()+1000*60*60*24*7,
+        maxAge:1000*60*60*24*7
+    }
+}
+app.use(session(sessionConfig))
+
+app.use(passport.initialize())
+app.use(passport.session())
+passport.use(new passportLocal(User.authenticate()))
+passport.serializeUser(User.serializeUser())
+passport.deserializeUser(User.deserializeUser())
 const users={};
-const User=require("./models/user")
+
 app.get('/register',(req,res)=>{
     res.send(users);
 })
-app.post('/register',(req,res)=>{
+app.post('/register',async(req,res)=>{
     const id=uuidv4();
     const {username,password}=req.body
     
-    const user=new User({email:username,password})
-    user.save()
+    const user=new User({username})
+    // console.log(password)
+    
+    const registeredUser=await User.register(user,password)
+    // user.save()
+    // const user = new User({username});
+    // await user.setPassword(password);
+    // await user.save();
     res.status(201).send(users[id])
+})
+app.post('/login',passport.authenticate('local',{failureFlash:true,failureRedirect:'/login'}),async(req,res)=>{
+   
+    // const {username,password}=req.body
+    
+    // const user=new User({username})
+    // // console.log(password)
+    
+    // const registeredUser=await User.register(user,password)
+    // // user.save()
+    // // const user = new User({username});
+    // // await user.setPassword(password);
+    // // await user.save();
+    console.log("logged in")
+    res.status(201).send("logged in")
 })
 app.listen(4000,()=>{
     console.log('Listening on 4000')
